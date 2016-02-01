@@ -28,6 +28,10 @@ import javax.servlet.http.Part;
 @MultipartConfig
 public class UploadVideo extends HttpServlet {
 	private static final long serialVersionUID = 1L;
+	private static final String FILE_PAYLOAD = "file";
+	private static final String PARAM_ANGLE = "angle";
+	private static final String VIDEO_TYPE = ".mp4";
+	private static final String FILE_PREFIX = "videos";
 	private final static Logger LOGGER = Logger.getLogger(UploadVideo.class
 			.getCanonicalName());
 
@@ -38,45 +42,52 @@ public class UploadVideo extends HttpServlet {
 		super();
 	}
 
-	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse
-	 *      response)
-	 */
-	protected void doGet(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-		// request.getInputStream()
-
-	}
-
-	protected void processRequest(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-		final String angleStr = request.getParameter("angle");
-		System.out.println(angleStr);
-	}
-
-	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
-	 *      response)
-	 */
-	protected void doPost(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-		final String angleStr = request.getParameter("angle");
+	private boolean validateRequest(PrintWriter writer, String angleStr) {
 		try {
-			Double.parseDouble(angleStr);
+			double angle = Double.parseDouble(angleStr);
+			if (angle <= 0 || angle >= 90) {
+				throw new Exception("Angle is out of scope. ");
+			}
+			return true;
 		} catch (Exception e) {
-
+			LOGGER.log(Level.SEVERE, "Invalid angle parameter {0}",
+					new Object[] { angleStr });
+			writer.println("Invalid or non-existing angle parameter");
+			return false;
 		}
+	}
+
+	private String generateFileName(String angleStr) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 		Date date = new Date();
-		final String fileName = dateFormat.format(date) + "_" + angleStr
-				+ ".mp4";
-		final String filePath = getServletContext().getRealPath("/") + fileName;
+		return dateFormat.format(date) + "_" + angleStr + VIDEO_TYPE;
+	}
+	
+	private String generateFilePath(String fileName) {
+		String fileFolder = getServletContext().getRealPath("/")
+				+ FILE_PREFIX;
+
+		File outputFile = new File(fileFolder);
+		outputFile.mkdirs();
+		return fileFolder + "/" + fileName;
+	}
+
+	protected void doPost(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+		final PrintWriter writer = response.getWriter();
+		final String angleStr = request.getParameter(PARAM_ANGLE);
+		if (!validateRequest(writer, angleStr)) {
+			return;
+		}
+
+		final String fileName = generateFileName(angleStr);
+		final String filePath = generateFilePath(fileName);
 		File outputFile = new File(filePath);
-		final Part filePart = request.getPart("file");
+
+		final Part filePart = request.getPart(FILE_PAYLOAD);
 
 		OutputStream out = null;
 		InputStream filecontent = null;
-		final PrintWriter writer = response.getWriter();
 
 		try {
 			out = new FileOutputStream(outputFile);
@@ -109,13 +120,4 @@ public class UploadVideo extends HttpServlet {
 			}
 		}
 	}
-
-	/**
-	 * @see HttpServlet#doPut(HttpServletRequest, HttpServletResponse)
-	 */
-	protected void doPut(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-
-	}
-
 }
