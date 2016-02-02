@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
+import util.Settings;
 import notification.EmailNotification;
 
 /**
@@ -34,7 +35,6 @@ public class UploadVideo extends HttpServlet {
 	private static final String PARAM_ANGLE = "angle";
 	private static final String VIDEO_TYPE = ".mp4";
 	private static final String FILE_PREFIX = "videos";
-	private static final String TO_ADDRESS = "wchenpublic@gmail.com";
 	private final static Logger LOGGER = Logger.getLogger(UploadVideo.class
 			.getCanonicalName());
 
@@ -106,9 +106,9 @@ public class UploadVideo extends HttpServlet {
 					new Object[] { fileName, filePath });
 			try {
 				EmailNotification.sendNotification(
-						FILE_PREFIX + "/" + fileName, TO_ADDRESS);
+						FILE_PREFIX + "/" + fileName, Settings.ADMIN_ADDRESS);
 				LOGGER.log(Level.INFO, "Email {0} has been sent to {1}",
-						new Object[] { fileName, TO_ADDRESS });
+						new Object[] { fileName, Settings.ADMIN_ADDRESS });
 			} catch (Exception e) {
 				writer.println("Upload done but the email was not sent. Please contact the administrator.");
 				LOGGER.log(Level.SEVERE,

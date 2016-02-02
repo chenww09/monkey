@@ -16,10 +16,6 @@ public class EmailNotification {
 	private static final String USERNAME = "chenww05";
 	private static final String PASSWORD = "100%packetLoss";
 
-	public static void main(String[] args) {
-		sendNotification("xxx", "wchenpublic@gmail.com");
-	}
-
 	public static void sendNotification(String fileName, String toAddress) {
 
 		Properties props = new Properties();
