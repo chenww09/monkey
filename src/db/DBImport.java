@@ -45,6 +45,7 @@ public class DBImport {
 					+ "(video_id VARCHAR(255) NOT NULL, "
 					+ "creation_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, "
 					+ "size_kb BIGINT(20) UNSIGNED, "
+					+ "angle FLOAT,"
 					+ "PRIMARY KEY ( video_id ))";
 			stmt.executeUpdate(sql);
 
