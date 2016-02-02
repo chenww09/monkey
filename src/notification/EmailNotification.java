@@ -10,13 +10,12 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import util.Settings;
+
 public class EmailNotification {
-	private static final String HOSTNAME = "localhost";
-	private static final String PORT = "8080";
 	private static final String USERNAME = "chenww05";
 	private static final String PASSWORD = "100%packetLoss";
-	private static final String PROJECT_NAME = "Monkey";
-	
+
 	public static void main(String[] args) {
 		sendNotification("xxx", "wchenpublic@gmail.com");
 	}
@@ -43,8 +42,8 @@ public class EmailNotification {
 			message.setRecipients(Message.RecipientType.TO,
 					InternetAddress.parse(toAddress));
 			message.setSubject("Monkey API: You have a new video uploaded");
-			message.setText("http://" + HOSTNAME + ":" + PORT + "/"
-					+ PROJECT_NAME + "/" + fileName);
+			message.setText("http://" + Settings.HOSTNAME + ":" + Settings.PORT
+					+ "/" + Settings.PROJECT_NAME + "/" + fileName);
 
 			Transport.send(message);
 

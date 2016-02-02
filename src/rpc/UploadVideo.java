@@ -101,7 +101,7 @@ public class UploadVideo extends HttpServlet {
 			while ((read = filecontent.read(bytes)) != -1) {
 				out.write(bytes, 0, read);
 			}
-			writer.println("File being uploaded");
+			writer.println("File has been uploaded");
 			LOGGER.log(Level.INFO, "File {0} has been uploaded to {1}",
 					new Object[] { fileName, filePath });
 			try {
