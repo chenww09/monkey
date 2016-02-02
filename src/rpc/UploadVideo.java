@@ -1,7 +1,6 @@
 package rpc;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +33,7 @@ public class UploadVideo extends HttpServlet {
 	private static final String PARAM_ANGLE = "angle";
 	private static final String VIDEO_TYPE = ".mp4";
 	private static final String FILE_PREFIX = "videos";
+	private static final String FILE_PERMANENT_STORE = "/tmp/monkey/videos";
 	private final static Logger LOGGER = Logger.getLogger(UploadVideo.class
 			.getCanonicalName());
 
@@ -65,12 +65,55 @@ public class UploadVideo extends HttpServlet {
 		return dateFormat.format(date) + "_" + angleStr + VIDEO_TYPE;
 	}
 
-	private String generateFilePath(String fileName) {
-		String fileFolder = getServletContext().getRealPath("/") + FILE_PREFIX;
+	private boolean sendEmailNotification(String fileName) {
+		try {
+			for (String address : EmailNotification.NOTIFICATION_LIST) {
+				EmailNotification.sendNotification(
+						FILE_PREFIX + "/" + fileName, address);
+				LOGGER.log(Level.INFO, "Email {0} has been sent to {1}",
+						new Object[] { fileName, address });
+			}
+			return true;
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE,
+					"Problems during email notification. Error: {0}",
+					new Object[] { e.getMessage() });
+			return false;
+		}
+	}
 
-		File outputFile = new File(fileFolder);
-		outputFile.mkdirs();
-		return fileFolder + "/" + fileName;
+	private boolean storeFile(String filePath, String fileName, Part filePart)
+			throws IOException {
+		File outputFile = new File(filePath);
+		OutputStream out = null;
+		InputStream filecontent = null;
+		try {
+			out = new FileOutputStream(outputFile);
+			filecontent = filePart.getInputStream();
+
+			int read = 0;
+			final byte[] bytes = new byte[1024];
+
+			while ((read = filecontent.read(bytes)) != -1) {
+				out.write(bytes, 0, read);
+			}
+			LOGGER.log(Level.INFO, "File {0} has been uploaded to {1}",
+					new Object[] { fileName, filePath });
+
+			return true;
+		} catch (IOException fne) {
+
+			LOGGER.log(Level.SEVERE, "Problems during file upload. Error: {0}",
+					new Object[] { fne.getMessage() });
+			return false;
+		} finally {
+			if (out != null) {
+				out.close();
+			}
+			if (filecontent != null) {
+				filecontent.close();
+			}
+		}
 	}
 
 	protected void doPost(HttpServletRequest request,
@@ -82,57 +125,35 @@ public class UploadVideo extends HttpServlet {
 		}
 
 		final String fileName = generateFileName(angleStr);
-		final String filePath = generateFilePath(fileName);
-		File outputFile = new File(filePath);
+		String fileFolder = getServletContext().getRealPath("/") + FILE_PREFIX;
+
+		new File(fileFolder).mkdirs();
+		String filePath =  fileFolder + "/" + fileName;
 
 		final Part filePart = request.getPart(FILE_PAYLOAD);
-
-		OutputStream out = null;
-		InputStream filecontent = null;
-
-		try {
-			out = new FileOutputStream(outputFile);
-			filecontent = filePart.getInputStream();
-
-			int read = 0;
-			final byte[] bytes = new byte[1024];
-
-			while ((read = filecontent.read(bytes)) != -1) {
-				out.write(bytes, 0, read);
-			}
+		if (storeFile(filePath, fileName, filePart)) {
 			writer.println("File has been uploaded");
 			LOGGER.log(Level.INFO, "File {0} has been uploaded to {1}",
 					new Object[] { fileName, filePath });
-			try {
-				for (String address : EmailNotification.NOTIFICATION_LIST) {
-					EmailNotification.sendNotification(FILE_PREFIX + "/"
-							+ fileName, address);
-					LOGGER.log(Level.INFO, "Email {0} has been sent to {1}",
-							new Object[] { fileName, address });
-				}
-			} catch (Exception e) {
-				writer.println("Upload done but the email was not sent. Please contact the administrator.");
-				LOGGER.log(Level.SEVERE,
-						"Problems during email notification. Error: {0}",
-						new Object[] { e.getMessage() });
-			}
 
-		} catch (FileNotFoundException fne) {
+			if (!sendEmailNotification(fileName)) {
+				writer.println("Email notification failed.");
+			}
+			
+			new File(FILE_PERMANENT_STORE).mkdirs();
+			String permanentFilePath = FILE_PERMANENT_STORE + "/" + fileName;
+			if (!storeFile(permanentFilePath, fileName, filePart)) {
+				writer.println("Failed to copy it to permanent store");
+			}
+		} else {
 			writer.println("Upload failed");
-			writer.println("<br/> ERROR: " + fne.getMessage());
+			LOGGER.log(Level.SEVERE,
+					"Problems during file upload. Error: {0} to {1}",
+					new Object[] { fileName, filePath });
+		}
 
-			LOGGER.log(Level.SEVERE, "Problems during file upload. Error: {0}",
-					new Object[] { fne.getMessage() });
-		} finally {
-			if (out != null) {
-				out.close();
-			}
-			if (filecontent != null) {
-				filecontent.close();
-			}
-			if (writer != null) {
-				writer.close();
-			}
+		if (writer != null) {
+			writer.close();
 		}
 	}
 }
