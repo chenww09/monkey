@@ -4,55 +4,52 @@ import java.util.Properties;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
-public class EmailNotification
-{
-   public boolean sendEmail(String to, String from)
-   {    
-      // Assuming you are sending email from localhost
-      String host = "localhost";
+public class EmailNotification {
+	private static final String HOSTNAME = "localhost";
+	private static final String PORT = "8080";
+	private static final String USERNAME = "chenww05";
+	private static final String PASSWORD = "100%packetLoss";
+	private static final String PROJECT_NAME = "Monkey";
+	
+	public static void main(String[] args) {
+		sendNotification("xxx", "wchenpublic@gmail.com");
+	}
 
-      // Get system properties
-      Properties properties = System.getProperties();
+	public static void sendNotification(String fileName, String toAddress) {
 
-      // Setup mail server
-      properties.setProperty("mail.smtp.host", host);
+		Properties props = new Properties();
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.starttls.enable", "true");
+		props.put("mail.smtp.host", "mail.workflowsim.org");
+		props.put("mail.smtp.port", "25");
 
-      // Get the default Session object.
-      Session session = Session.getDefaultInstance(properties);
+		Session session = Session.getInstance(props,
+				new javax.mail.Authenticator() {
+					protected PasswordAuthentication getPasswordAuthentication() {
+						return new PasswordAuthentication(USERNAME, PASSWORD);
+					}
+				});
 
-      try{
-         // Create a default MimeMessage object.
-         MimeMessage message = new MimeMessage(session);
+		try {
 
-         // Set From: header field of the header.
-         message.setFrom(new InternetAddress(from));
+			Message message = new MimeMessage(session);
+			message.setFrom(new InternetAddress("no-reply@mtomgroup.com"));
+			message.setRecipients(Message.RecipientType.TO,
+					InternetAddress.parse(toAddress));
+			message.setSubject("Monkey API: You have a new video uploaded");
+			message.setText("http://" + HOSTNAME + ":" + PORT + "/"
+					+ PROJECT_NAME + "/" + fileName);
 
-         // Set To: header field of the header.
-         message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+			Transport.send(message);
 
-         // Set Subject: header field
-         message.setSubject("This is the Subject Line!");
-
-         // Now set the actual message
-         message.setText("This is actual message");
-
-         // Send message
-         Transport.send(message);
-         System.out.println("Sent message successfully....");
-         return true;
-      }catch (MessagingException mex) {
-         mex.printStackTrace();
-         return false;
-      }
-   }
-   
-   public static void main(String[] args) {
-	   EmailNotification notification  = new EmailNotification();
-	   notification.sendEmail("weiweich@usc.edu", "wchenpublic@gmail.com");
-   }
+		} catch (MessagingException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

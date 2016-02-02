@@ -21,6 +21,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
+import notification.EmailNotification;
+
 /**
  * Servlet implementation class UploadVideo
  */
@@ -32,6 +34,7 @@ public class UploadVideo extends HttpServlet {
 	private static final String PARAM_ANGLE = "angle";
 	private static final String VIDEO_TYPE = ".mp4";
 	private static final String FILE_PREFIX = "videos";
+	private static final String TO_ADDRESS = "wchenpublic@gmail.com";
 	private final static Logger LOGGER = Logger.getLogger(UploadVideo.class
 			.getCanonicalName());
 
@@ -62,10 +65,9 @@ public class UploadVideo extends HttpServlet {
 		Date date = new Date();
 		return dateFormat.format(date) + "_" + angleStr + VIDEO_TYPE;
 	}
-	
+
 	private String generateFilePath(String fileName) {
-		String fileFolder = getServletContext().getRealPath("/")
-				+ FILE_PREFIX;
+		String fileFolder = getServletContext().getRealPath("/") + FILE_PREFIX;
 
 		File outputFile = new File(fileFolder);
 		outputFile.mkdirs();
@@ -102,6 +104,18 @@ public class UploadVideo extends HttpServlet {
 			writer.println("File being uploaded");
 			LOGGER.log(Level.INFO, "File {0} has been uploaded to {1}",
 					new Object[] { fileName, filePath });
+			try {
+				EmailNotification.sendNotification(
+						FILE_PREFIX + "/" + fileName, TO_ADDRESS);
+				LOGGER.log(Level.INFO, "Email {0} has been sent to {1}",
+						new Object[] { fileName, TO_ADDRESS });
+			} catch (Exception e) {
+				writer.println("Upload done but the email was not sent. Please contact the administrator.");
+				LOGGER.log(Level.SEVERE,
+						"Problems during email notification. Error: {0}",
+						new Object[] { e.getMessage() });
+			}
+
 		} catch (FileNotFoundException fne) {
 			writer.println("Upload failed");
 			writer.println("<br/> ERROR: " + fne.getMessage());
