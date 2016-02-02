@@ -1,5 +1,7 @@
 package notification;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import javax.mail.Message;
@@ -15,6 +17,8 @@ import util.Settings;
 public class EmailNotification {
 	private static final String USERNAME = "chenww05";
 	private static final String PASSWORD = "100%packetLoss";
+	public static final List<String> NOTIFICATION_LIST = Arrays.asList(
+			"chenwwforhome@gmail.com", Settings.ADMIN_ADDRESS);
 
 	public static void sendNotification(String fileName, String toAddress) {
 

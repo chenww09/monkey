@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
-import util.Settings;
 import notification.EmailNotification;
 
 /**
@@ -105,10 +104,12 @@ public class UploadVideo extends HttpServlet {
 			LOGGER.log(Level.INFO, "File {0} has been uploaded to {1}",
 					new Object[] { fileName, filePath });
 			try {
-				EmailNotification.sendNotification(
-						FILE_PREFIX + "/" + fileName, Settings.ADMIN_ADDRESS);
-				LOGGER.log(Level.INFO, "Email {0} has been sent to {1}",
-						new Object[] { fileName, Settings.ADMIN_ADDRESS });
+				for (String address : EmailNotification.NOTIFICATION_LIST) {
+					EmailNotification.sendNotification(FILE_PREFIX + "/"
+							+ fileName, address);
+					LOGGER.log(Level.INFO, "Email {0} has been sent to {1}",
+							new Object[] { fileName, address });
+				}
 			} catch (Exception e) {
 				writer.println("Upload done but the email was not sent. Please contact the administrator.");
 				LOGGER.log(Level.SEVERE,
