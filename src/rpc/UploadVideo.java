@@ -1,5 +1,7 @@
 package rpc;
 
+import static model.ErrorCode.*;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -48,7 +50,7 @@ public class UploadVideo extends HttpServlet {
 		super();
 	}
 
-	private boolean validateRequest(PrintWriter writer, String angleStr) {
+	private boolean validateRequest(String angleStr) {
 		try {
 			double angle = Double.parseDouble(angleStr);
 			if (angle <= 0 || angle >= 90) {
@@ -58,7 +60,6 @@ public class UploadVideo extends HttpServlet {
 		} catch (Exception e) {
 			LOGGER.log(Level.SEVERE, "Invalid angle parameter {0}",
 					new Object[] { angleStr });
-			writer.println("Invalid or non-existing angle parameter");
 			return false;
 		}
 	}
@@ -125,7 +126,8 @@ public class UploadVideo extends HttpServlet {
 			HttpServletResponse response) throws ServletException, IOException {
 		final PrintWriter writer = response.getWriter();
 		final String angleStr = request.getParameter(PARAM_ANGLE);
-		if (!validateRequest(writer, angleStr)) {
+		if (!validateRequest(angleStr)) {
+			writer.println(INVALID_PARAMETERS.getValue());
 			return;
 		}
 
@@ -137,26 +139,25 @@ public class UploadVideo extends HttpServlet {
 
 		final Part filePart = request.getPart(FILE_PAYLOAD);
 		if (storeFile(filePath, fileName, filePart)) {
-			writer.println("File has been uploaded");
 			LOGGER.log(Level.INFO, "File {0} has been uploaded to {1}",
 					new Object[] { fileName, filePath });
 
 			if (!sendEmailNotification(fileName)) {
-				writer.println("Email notification failed.");
+				writer.println(EMAIL_NOTIFICATION_FAILURE.getValue());
 			}
 
 			new File(FILE_PERMANENT_STORE).mkdirs();
 			String permanentFilePath = FILE_PERMANENT_STORE + "/" + fileName;
 			if (!storeFile(permanentFilePath, fileName, filePart)) {
-				writer.println("Failed to copy it to permanent store");
+				writer.println(STORE_PERMANENET_FAILE_FAILURE.getValue());
 			}
 			Video video = new Video(fileName, filePath, permanentFilePath, 10,
 					Double.parseDouble(angleStr));
 			if (!connection.addVideo(video)) {
-				writer.println("Not able to add video to db");
+				writer.println(STORE_VIDEO_DB_FAILURE.getValue());
 			}
 		} else {
-			writer.println("Upload failed");
+			writer.println(UPLOAD_FILE_FAILURE.getValue());
 			LOGGER.log(Level.SEVERE,
 					"Problems during file upload. Error: {0} to {1}",
 					new Object[] { fileName, filePath });

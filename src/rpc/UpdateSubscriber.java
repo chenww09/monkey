@@ -1,5 +1,7 @@
 package rpc;
 
+import static model.ErrorCode.*;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Level;
@@ -50,23 +52,14 @@ public class UpdateSubscriber extends HttpServlet {
 				if (connection.addSubscriber(user)) {
 					LOGGER.log(Level.INFO, "User {0} has been created.",
 							new Object[] { username });
-
-					writer.println("User " + username + " has been created");
-				} else {
-					LOGGER.log(Level.SEVERE, "User {0} has not been created.",
-							new Object[] { username });
-
-					writer.println("User " + username + " has not been created");
+					return;
 				}
 			} catch (JSONException e) {
-				LOGGER.log(Level.SEVERE, "User not created.");
-				writer.println("Error in creating a new user. ");
 				e.printStackTrace();
 			}
-		} else {
-			LOGGER.log(Level.SEVERE, "User not created.");
-			writer.println("Error in creating a new user. ");
 		}
+		LOGGER.log(Level.SEVERE, "User not created.");
+		writer.println(ADD_USER_FAILURE.getValue());
 	}
 
 	protected void doDelete(HttpServletRequest request,
@@ -81,20 +74,15 @@ public class UpdateSubscriber extends HttpServlet {
 				if (connection.removeSubscriber(username)) {
 					LOGGER.log(Level.INFO, "User {0} has been removed.",
 							new Object[] { username });
-					writer.println("User " + username + " has been removed");
-				} else {
-					LOGGER.log(Level.SEVERE, "User {0} has not been removed",
-							new Object[] { username });
-					writer.println("User " + username + " has not been removed");
+					return;
 				}
 			} catch (Exception e) {
-				LOGGER.log(Level.SEVERE, "User not removed.");
-				writer.println("Error in removing a new user. ");
+				e.printStackTrace();
 			}
-		} else {
-			LOGGER.log(Level.SEVERE, "User not removed.");
-			writer.println("Error in removing a new user. ");
 		}
+		LOGGER.log(Level.SEVERE, "User not removed.");
+		writer.println(REMOVE_USER_FAILURE.getValue());
+
 	}
 
 }
