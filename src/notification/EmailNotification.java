@@ -1,6 +1,8 @@
 package notification;
 
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -13,6 +15,8 @@ import javax.mail.internet.MimeMessage;
 import util.Settings;
 
 public class EmailNotification {
+	private final static Logger LOGGER = Logger
+			.getLogger(EmailNotification.class.getCanonicalName());
 	private static final String USERNAME = "AKIAJGOE7CEEDWLLX23Q";
 	private static final String PASSWORD = "AvfjYInsb+ZfgH5eCN1hiRG7ym0+ppAA8tMQNKOAA43S";
 
@@ -58,8 +62,8 @@ public class EmailNotification {
 				transport.sendMessage(message, message.getAllRecipients());
 				return true;
 			} catch (Exception ex) {
-				System.out.println("The email was not sent.");
-				System.out.println("Error message: " + ex.getMessage());
+				LOGGER.log(Level.SEVERE, "Failed to send email to server {0}",
+						new Object[] { ex.getMessage() });
 				return false;
 			} finally {
 				transport.close();
