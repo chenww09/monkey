@@ -73,13 +73,20 @@ public class UploadVideo extends HttpServlet {
 	private boolean sendEmailNotification(String fileName) {
 		try {
 			List<String> emails = connection.getAllSubscriberEmails();
+			boolean status = true;
 			for (String address : emails) {
-				EmailNotification.sendNotification(
-						FILE_PREFIX + "/" + fileName, address);
-				LOGGER.log(Level.INFO, "Email {0} has been sent to {1}",
-						new Object[] { fileName, address });
+				if (EmailNotification.sendNotification(FILE_PREFIX + "/"
+						+ fileName, address)) {
+					LOGGER.log(Level.INFO, "Email {0} has been sent to {1}",
+							new Object[] { fileName, address });
+				} else {
+					LOGGER.log(Level.SEVERE,
+							"Problems during email notification. Error: {0}",
+							new Object[] { address });
+					status = false;
+				}
 			}
-			return true;
+			return status;
 		} catch (Exception e) {
 			LOGGER.log(Level.SEVERE,
 					"Problems during email notification. Error: {0}",
@@ -138,7 +145,7 @@ public class UploadVideo extends HttpServlet {
 		String filePath = fileFolder + "/" + fileName;
 
 		final Part filePart = request.getPart(FILE_PAYLOAD);
-		if (storeFile(filePath, fileName, filePart)) {
+		if (filePart != null && storeFile(filePath, fileName, filePart)) {
 			LOGGER.log(Level.INFO, "File {0} has been uploaded to {1}",
 					new Object[] { fileName, filePath });
 
