@@ -8,7 +8,7 @@ import java.sql.Statement;
 import util.DBSettings;
 
 public class DBImport {
-	
+
 	public static void main(String[] args) {
 		DBImport.rebuildDB();
 	}
@@ -43,9 +43,11 @@ public class DBImport {
 			// Step 2: create tables
 			sql = "CREATE TABLE videos "
 					+ "(video_id VARCHAR(255) NOT NULL, "
+					+ "file_name VARCHAR(255) NOT NULL, "
+					+ "file_path VARCHAR(255) NOT NULL, "
+					+ "file_permanent_path VARCHAR(255) NOT NULL, "
 					+ "creation_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, "
-					+ "size_kb BIGINT(20) UNSIGNED, "
-					+ "angle FLOAT,"
+					+ "size_kb BIGINT(20) UNSIGNED, " + "angle FLOAT,"
 					+ "PRIMARY KEY ( video_id ))";
 			stmt.executeUpdate(sql);
 
@@ -53,6 +55,7 @@ public class DBImport {
 					+ "(user_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, "
 					+ "first_name VARCHAR(255), " + "last_name VARCHAR(255), "
 					+ "password VARCHAR(255)," + "email VARCHAR(255),"
+					+ "role VARCHAR(255), " + "username VARCHAR(255),"
 					+ "PRIMARY KEY ( user_id ))";
 			stmt.executeUpdate(sql);
 
@@ -66,8 +69,8 @@ public class DBImport {
 					+ "FOREIGN KEY (user_id) REFERENCES users(user_id))";
 			stmt.executeUpdate(sql);
 
-			sql = "INSERT INTO users (`first_name`, `last_name`, `password`, `email`) "
-					+ "VALUES (\"John\", \"Smith\", \"root\", \"wchenpublic@gmail.com\")";
+			sql = "INSERT INTO users (`first_name`, `last_name`, `password`, `username`, `email`) "
+					+ "VALUES (\"John\", \"Smith\", \"root\", \"wchen\", \"wchenpublic@gmail.com\")";
 			stmt.executeUpdate(sql);
 
 			System.out.println("Done Importing");

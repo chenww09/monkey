@@ -20,6 +20,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
+import db.DBConnection;
+import model.Video;
 import notification.EmailNotification;
 
 /**
@@ -36,6 +38,7 @@ public class UploadVideo extends HttpServlet {
 	private static final String FILE_PERMANENT_STORE = "/tmp/monkey/videos";
 	private final static Logger LOGGER = Logger.getLogger(UploadVideo.class
 			.getCanonicalName());
+	private static final DBConnection connection = new DBConnection();
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -128,7 +131,7 @@ public class UploadVideo extends HttpServlet {
 		String fileFolder = getServletContext().getRealPath("/") + FILE_PREFIX;
 
 		new File(fileFolder).mkdirs();
-		String filePath =  fileFolder + "/" + fileName;
+		String filePath = fileFolder + "/" + fileName;
 
 		final Part filePart = request.getPart(FILE_PAYLOAD);
 		if (storeFile(filePath, fileName, filePart)) {
@@ -139,12 +142,15 @@ public class UploadVideo extends HttpServlet {
 			if (!sendEmailNotification(fileName)) {
 				writer.println("Email notification failed.");
 			}
-			
+
 			new File(FILE_PERMANENT_STORE).mkdirs();
 			String permanentFilePath = FILE_PERMANENT_STORE + "/" + fileName;
 			if (!storeFile(permanentFilePath, fileName, filePart)) {
 				writer.println("Failed to copy it to permanent store");
 			}
+			Video video = new Video(fileName, filePath, permanentFilePath, 0,
+					Double.parseDouble(angleStr));
+			connection.addVideo(video);
 		} else {
 			writer.println("Upload failed");
 			LOGGER.log(Level.SEVERE,
