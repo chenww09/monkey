@@ -11,6 +11,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import db.DBConnection;
 import model.User;
 
@@ -31,20 +34,35 @@ public class UpdateSubscriber extends HttpServlet {
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		final PrintWriter writer = response.getWriter();
-		if (request.getParameterMap().containsKey("username")
-				&& request.getParameterMap().containsKey("first_name")
-				&& request.getParameterMap().containsKey("last_name")
-				&& request.getParameterMap().containsKey("email")
-				&& request.getParameterMap().containsKey("password")) {
-			String username = request.getParameter("username");
-			User user = new User(request.getParameter("first_name"),
-					request.getParameter("last_name"), username,
-					request.getParameter("email"),
-					request.getParameter("password"));
-			connection.addSubscriber(user);
-			LOGGER.log(Level.INFO, "User {0} has been created.",
-					new Object[] { username });
-			writer.println("User" + username + " has been created");
+		JSONObject input = RpcParser.parseInput(request);
+
+		if (input.has("username") && input.has("first_name")
+				&& input.has("last_name") && input.has("email")
+				&& input.has("password")) {
+
+			try {
+				String username = input.getString("username");
+				User user;
+				user = new User(input.getString("first_name"),
+						input.getString("last_name"), username,
+						input.getString("email"), input.getString("password"));
+
+				if (connection.addSubscriber(user)) {
+					LOGGER.log(Level.INFO, "User {0} has been created.",
+							new Object[] { username });
+
+					writer.println("User " + username + " has been created");
+				} else {
+					LOGGER.log(Level.SEVERE, "User {0} has not been created.",
+							new Object[] { username });
+
+					writer.println("User " + username + " has not been created");
+				}
+			} catch (JSONException e) {
+				LOGGER.log(Level.SEVERE, "User not created.");
+				writer.println("Error in creating a new user. ");
+				e.printStackTrace();
+			}
 		} else {
 			LOGGER.log(Level.SEVERE, "User not created.");
 			writer.println("Error in creating a new user. ");
@@ -54,13 +72,25 @@ public class UpdateSubscriber extends HttpServlet {
 	protected void doDelete(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		final PrintWriter writer = response.getWriter();
-		if (request.getParameterMap().containsKey("username")) {
-			String username = request.getParameter("username");
+		JSONObject input = RpcParser.parseInput(request);
 
-			connection.removeSubscriber(username);
-			LOGGER.log(Level.INFO, "User {0} has been removed.",
-					new Object[] { username });
-			writer.println("User" + username + " has been removed");
+		if (input.has("username")) {
+			try {
+				String username = input.getString("username");
+
+				if (connection.removeSubscriber(username)) {
+					LOGGER.log(Level.INFO, "User {0} has been removed.",
+							new Object[] { username });
+					writer.println("User " + username + " has been removed");
+				} else {
+					LOGGER.log(Level.SEVERE, "User {0} has not been removed",
+							new Object[] { username });
+					writer.println("User " + username + " has not been removed");
+				}
+			} catch (Exception e) {
+				LOGGER.log(Level.SEVERE, "User not removed.");
+				writer.println("Error in removing a new user. ");
+			}
 		} else {
 			LOGGER.log(Level.SEVERE, "User not removed.");
 			writer.println("Error in removing a new user. ");

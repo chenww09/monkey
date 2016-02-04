@@ -3,7 +3,10 @@ package db;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,21 +47,30 @@ public class DBConnection {
 		}
 	}
 
-	private void executeUpdateStatement(String query) {
+	/**
+	 * @return true if succeeds
+	 */
+	private boolean executeUpdateStatement(String query) {
 		if (conn == null) {
-			return;
+			return false;
 		}
 		try {
 			Statement stmt = conn.createStatement();
 			LOGGER.log(Level.INFO, "DB query {0} is done.",
 					new Object[] { query });
 			stmt.executeUpdate(query);
+			return true;
 		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "DB query {0} is not done.",
+					new Object[] { query });
 			e.printStackTrace();
+			return false;
 		}
 	}
 
-	@SuppressWarnings("unused")
+	/** 
+	 * @return null if fails
+	 */
 	private ResultSet executeFetchStatement(String query) {
 		if (conn == null) {
 			return null;
@@ -73,9 +85,34 @@ public class DBConnection {
 		}
 		return null;
 	}
+	
+	/**
+	 * @return null if fails
+	 */
+	public List<String> getAllSubscriberEmails() {
+		List<String> emails = new ArrayList<> ();
+		String sql = "SELECT email FROM users ";
+		ResultSet result = executeFetchStatement(sql);
+		if (result == null) {
+			return null;
+		}
+		try {
+			while (result.next()) {
+				emails.add(result.getString("email"));
+			}
+			return emails;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			LOGGER.log(Level.SEVERE, "Cannot fetch subscribers.");
+			return null;
+		}
+	}
 
-	public void addSubscriber(User user) {
-		String sql = "INSERT INTO users (`first_name`, `last_name`, `password`, `username`, `email`) "
+	/**
+	 * @return true if succeeds
+	 */
+	public boolean addSubscriber(User user) {
+		String sql = "INSERT IGNORE INTO users (`first_name`, `last_name`, `password`, `username`, `email`) "
 				+ "VALUES (\""
 				+ user.getFirstName()
 				+ "\", \""
@@ -84,17 +121,23 @@ public class DBConnection {
 				+ user.getPassword()
 				+ "\", \""
 				+ user.getUsername() + "\", \"" + user.getEmail() + "\")";
-		executeUpdateStatement(sql);
+		return executeUpdateStatement(sql);
 	}
 
-	public void removeSubscriber(String username) {
-		String sql = "DELETE FROM history WHERE `username`=\"" + username
+	/**
+	 * @return true if succeeds
+	 */
+	public boolean removeSubscriber(String username) {
+		String sql = "DELETE FROM users WHERE `username`=\"" + username
 				+ "\"";
-		executeUpdateStatement(sql);
+		return executeUpdateStatement(sql);
 	}
 
+	/** 
+	 * @return true if succeed.
+	 */
 	public boolean addVideo(Video video) {
-		String sql = "INSERT INTO users (`video_id`, `file_name`, `file_path`, `file_permanent_path`, `size_kb`, `angle`) "
+		String sql = "INSERT INTO videos (`video_id`, `file_name`, `file_path`, `file_permanent_path`, `size_kb`, `angle`) "
 				+ "VALUES (\""
 				+ video.getFileName()
 				+ "\", \""
@@ -107,7 +150,6 @@ public class DBConnection {
 				+ video.getSizeKB() 
 				+ "\", \"" 
 				+ video.getAngle() + "\")";
-		executeUpdateStatement(sql);
-		return true;
+		return executeUpdateStatement(sql);
 	}
 }

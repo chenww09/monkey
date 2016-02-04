@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -70,7 +71,8 @@ public class UploadVideo extends HttpServlet {
 
 	private boolean sendEmailNotification(String fileName) {
 		try {
-			for (String address : EmailNotification.NOTIFICATION_LIST) {
+			List<String> emails = connection.getAllSubscriberEmails();
+			for (String address : emails) {
 				EmailNotification.sendNotification(
 						FILE_PREFIX + "/" + fileName, address);
 				LOGGER.log(Level.INFO, "Email {0} has been sent to {1}",
@@ -148,9 +150,11 @@ public class UploadVideo extends HttpServlet {
 			if (!storeFile(permanentFilePath, fileName, filePart)) {
 				writer.println("Failed to copy it to permanent store");
 			}
-			Video video = new Video(fileName, filePath, permanentFilePath, 0,
+			Video video = new Video(fileName, filePath, permanentFilePath, 10,
 					Double.parseDouble(angleStr));
-			connection.addVideo(video);
+			if (!connection.addVideo(video)) {
+				writer.println("Not able to add video to db");
+			}
 		} else {
 			writer.println("Upload failed");
 			LOGGER.log(Level.SEVERE,

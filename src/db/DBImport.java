@@ -52,21 +52,21 @@ public class DBImport {
 			stmt.executeUpdate(sql);
 
 			sql = "CREATE TABLE users "
-					+ "(user_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, "
+					+ "("
 					+ "first_name VARCHAR(255), " + "last_name VARCHAR(255), "
 					+ "password VARCHAR(255)," + "email VARCHAR(255),"
-					+ "role VARCHAR(255), " + "username VARCHAR(255),"
-					+ "PRIMARY KEY ( user_id ))";
+					+ "role VARCHAR(255), " + "username VARCHAR(255) NOT NULL,"
+					+ "PRIMARY KEY ( username ))";
 			stmt.executeUpdate(sql);
 
 			sql = "CREATE TABLE history "
 					+ "(visit_history_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, "
-					+ " user_id BIGINT(20) unsigned NOT NULL , "
+					+ " username VARCHAR(255) NOT NULL , "
 					+ " video_id VARCHAR(255) NOT NULL, "
 					+ " last_visited_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, "
 					+ " PRIMARY KEY (visit_history_id),"
 					+ "FOREIGN KEY (video_id) REFERENCES videos(video_id),"
-					+ "FOREIGN KEY (user_id) REFERENCES users(user_id))";
+					+ "FOREIGN KEY (username) REFERENCES users(username))";
 			stmt.executeUpdate(sql);
 
 			sql = "INSERT INTO users (`first_name`, `last_name`, `password`, `username`, `email`) "
