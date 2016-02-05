@@ -33,5 +33,11 @@ public class RebuildDB extends HttpServlet {
 		DBImport.rebuildDB();
 		LOGGER.log(Level.SEVERE, "Rebuild DB");
 	}
+	
+	protected void doGet(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+		DBImport.rebuildDB();
+		LOGGER.log(Level.SEVERE, "Rebuild DB");
+	}
 
 }
