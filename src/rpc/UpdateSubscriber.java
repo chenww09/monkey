@@ -22,7 +22,7 @@ import model.User;
 /**
  * Servlet implementation class UpdateSubscriber
  */
-@WebServlet({ "/UpdateSubscriber", "/subscriber" })
+@WebServlet({ "/UpdateSubscriber", "/subscriber", "/subscribers" })
 public class UpdateSubscriber extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final DBConnection connection = new DBConnection();

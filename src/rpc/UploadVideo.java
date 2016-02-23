@@ -30,15 +30,17 @@ import notification.EmailNotification;
 /**
  * Servlet implementation class UploadVideo
  */
-@WebServlet({ "/UploadVideo", "/video" })
+@WebServlet({ "/UploadVideo", "/video", "/videos" })
 @MultipartConfig
 public class UploadVideo extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final String VIDEO_PAYLOAD = "video";
 	private static final String PARAM_PAYLOAD = "param";
+	private static final String PHOTO_PAYLOAD = "photo";
 	private static final String PARAM_ANGLE = "angle";
-	private static final String VIDEO_TYPE = ".mp4";
+	private static final String VIDEO_TYPE = ".mov";
 	private static final String PARAM_TYPE = ".txt";
+	private static final String PHOTO_TYPE = ".jpg";
 	private static final String FILE_PREFIX = "videos";
 	private static final String FILE_PERMANENT_STORE = "/tmp/monkey/videos";
 	private final static Logger LOGGER = Logger.getLogger(UploadVideo.class
@@ -134,17 +136,20 @@ public class UploadVideo extends HttpServlet {
 		}
 
 		List<String> fileList = new ArrayList<>();
-		
-		String currentTime = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date());
-		String subFolder = getServletContext().getRealPath("/") + FILE_PREFIX +"/" + currentTime;
+
+		String currentTime = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss")
+				.format(new Date());
+		String subFolder = getServletContext().getRealPath("/") + FILE_PREFIX
+				+ "/" + currentTime;
 		new File(subFolder).mkdirs();
-		
+
 		String subPermanentFolder = FILE_PERMANENT_STORE + "/" + currentTime;
 		new File(subPermanentFolder).mkdirs();
-		
-		String videoName =  currentTime + "_" + angleStr + VIDEO_TYPE;
+
+		String videoName = currentTime + "_" + angleStr + VIDEO_TYPE;
+
 		final Part videoPart = request.getPart(VIDEO_PAYLOAD);
-		
+
 		if (videoPart == null) {
 			writer.println(UPLOAD_FILE_FAILURE.getValue());
 			LOGGER.log(Level.SEVERE,
@@ -158,29 +163,40 @@ public class UploadVideo extends HttpServlet {
 		if (!status) {
 			writer.println(STORE_VIDEO_DB_FAILURE.getValue());
 		}
-		
+
 		String permanentVideoPath = subPermanentFolder + "/" + videoName;
 		status = storeFile(permanentVideoPath, videoName, videoPart);
 		if (!status) {
 			writer.println(STORE_PERMANENET_FAILE_FAILURE.getValue());
 		}
-		
-		final Part paramPart = request.getPart(PARAM_PAYLOAD);
 		fileList.add(FILE_PREFIX + "/" + currentTime + "/" + videoName);
+
+		final Part paramPart = request.getPart(PARAM_PAYLOAD);
 		if (paramPart != null) {
 			String paramName = currentTime + "_" + angleStr + PARAM_TYPE;
 			String paramPath = subFolder + "/" + paramName;
 			storeFile(paramPath, paramName, paramPart);
-			
+
 			paramPath = subPermanentFolder + "/" + paramName;
 			storeFile(paramPath, paramName, paramPart);
 			fileList.add(FILE_PREFIX + "/" + currentTime + "/" + paramName);
 		}
 		
+		final Part photoPart = request.getPart(PHOTO_PAYLOAD);
+		if (photoPart != null) {
+			String photoName = currentTime + "_" + angleStr + PHOTO_TYPE;
+			String photoPath = subFolder + "/" + photoName;
+			storeFile(photoPath, photoName, photoPart);
+
+			photoPath = subPermanentFolder + "/" + photoName;
+			storeFile(photoPath, photoName, paramPart);
+			fileList.add(FILE_PREFIX + "/" + currentTime + "/" + photoName);
+		}
+
 		if (!sendEmailNotification(fileList)) {
 			writer.println(EMAIL_NOTIFICATION_FAILURE.getValue());
 		}
-		
+
 		Video video = new Video(videoName, videoPath, permanentVideoPath, 10,
 				Double.parseDouble(angleStr));
 		if (!connection.addVideo(video)) {
